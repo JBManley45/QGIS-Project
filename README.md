@@ -12,7 +12,7 @@ can have flow chart from csv to program (general/layment) what it does and where
 1. readme
 2. git
 3. flow chart
+4. details
 
 # QGIS-Project
-# QGIS-Project
-# QGIS-Project
+
