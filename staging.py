@@ -1,4 +1,4 @@
-#Running: Vzw Only, Water RF Freindly 
+#Running: V Only, W RF Freindly 
 import os
 import pandas as pd
 import csv
@@ -20,15 +20,15 @@ from PyQt5.QtCore import QSize
 
 #initialize QGIS app
 def initialize_qgis():
-    QgsApplication.setPrefixPath('C:\\Program Files\\QGIS 3.34.2', True)
+    ('C:\\Program Files\\QGIS 3.34.2', True)
     qgs = QgsApplication([], False)
     qgs.initQgis()
     return qgs
 
 #load csv data as qgis layer
 def load_csv_as_layer(file_path):
-    file_path = str('C:\\CODE\\Input\\TEST.csv')
-    uri = f"file:///{file_path}?delimiter=,&xField=longitude&yField=latitude&crs=epsg:3857"
+    file_path = str('')
+    uri = f"file:///{file_path}?delimiter=,&xField=longitude&yField=latitude&crs=epsg:4326"
     layer = QgsVectorLayer(uri, 'Points', 'delimitedtext')
     if not layer.isValid():
         raise ValueError(f"Layer failed to load :( {file_path}")
@@ -51,7 +51,7 @@ def apply_qml_style(layer, qml_path):
 
 #Function to load QGIS project template
 def load_template(template_path):
-    template_path = 'C:\\CODE\\Template\\QGIS-WaterCoverage-Style.qml'
+    template_path = ''
     project = QgsProject.instance()
     project.read(template_path)
     return project
@@ -84,7 +84,7 @@ def plot_points_and_export_image(layer, output_image_path, template_path, qml_pa
     #set map settings
     map_settings = QgsMapSettings()
     map_settings.setLayers([layer, osm_layer])
-    map_settings.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:3857'))
+    map_settings.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
     map_settings.setOutputSize(QSize(2000, 1500))
     map_settings.setExtent(layer.extent())
     
@@ -130,10 +130,10 @@ def main(input_csv, output_image, template_path, qml_path):
         
 if __name__ == "__main__":
     #cwd = os.getcwd()
-    input_csv = 'C:\\CODE\\Input\\TEST.csv'
-    output_image = 'C:\\CODE\\Output\\mapped_Water_output.png'
-    template_path = 'C:\\CODE\\Template\\QGIS-WaterCoverage-Style.qml'
-    qml_path = 'C:\\CODE\\Template\\QGIS-WaterCoverage-Style.qml'
+    input_csv = ''
+    output_image = ''
+    template_path = ''
+    qml_path = ''
     
     # Print paths to verify they are correct
     print(f"CSV data loaded successfully from {input_csv}.")
