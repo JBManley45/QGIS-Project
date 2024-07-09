@@ -28,7 +28,7 @@ def initialize_qgis():
 #load csv data as qgis layer
 def load_csv_as_layer(file_path):
     file_path = str('C:\\CODE\\Input\\TEST.csv')
-    uri = f"file:///{file_path}?delimiter=,&xField=longitude&yField=latitude&crs=epsg:3857"
+    uri = f"file:///{file_path}?delimiter=,&xField=longitude&yField=latitude&crs=epsg:4326"
     layer = QgsVectorLayer(uri, 'Points', 'delimitedtext')
     if not layer.isValid():
         raise ValueError(f"Layer failed to load :( {file_path}")
@@ -46,6 +46,9 @@ def add_basemap(project):
 
 #load and apply QML style
 def apply_qml_style(layer, qml_path):
+    # Update the layer's symbology to use the specified attribute field
+    #layer.renderer().symbol().symbolLayer(0).setDataDefinedProperty('field', value_field)
+    
     layer.loadNamedStyle(qml_path)
     layer.triggerRepaint()
 
@@ -81,10 +84,10 @@ def plot_points_and_export_image(layer, output_image_path, template_path, qml_pa
     apply_qml_style(layer, qml_path)
     osm_layer = add_basemap(project)
         
-    #set map settings
+    #set map settings. EPSG 4326 is key standard due to being globe standard vs EPSG 3857 = map standard 
     map_settings = QgsMapSettings()
     map_settings.setLayers([layer, osm_layer])
-    map_settings.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:3857'))
+    map_settings.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
     map_settings.setOutputSize(QSize(2000, 1500))
     map_settings.setExtent(layer.extent())
     
@@ -131,7 +134,7 @@ def main(input_csv, output_image, template_path, qml_path):
 if __name__ == "__main__":
     #cwd = os.getcwd()
     input_csv = 'C:\\CODE\\Input\\TEST.csv'
-    output_image = 'C:\\CODE\\Output\\mapped_Water_output.png'
+    output_image = 'C:\\CODE\\Output\\mapped_Water_output_Vzw.png'
     template_path = 'C:\\CODE\\Template\\QGIS-WaterCoverage-Style.qml'
     qml_path = 'C:\\CODE\\Template\\QGIS-WaterCoverage-Style.qml'
     
@@ -141,3 +144,5 @@ if __name__ == "__main__":
     print(f"Output Image Path: {output_image}")
     
     main(input_csv, output_image, template_path, qml_path)    
+    
+    

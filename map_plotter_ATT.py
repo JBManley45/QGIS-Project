@@ -1,4 +1,4 @@
-#Will run Gas-Outdoor Vzw 
+#Running: Vzw Only, Water RF Freindly 
 import os
 import pandas as pd
 import csv
@@ -12,6 +12,8 @@ from qgis.core import (
     QgsMapRendererParallelJob,
     QgsRasterLayer,
     QgsLayerTreeGroup,
+    QgsCategorizedSymbolRenderer,
+    QgsGraduatedSymbolRenderer
 )
 from qgis.gui import QgsMapCanvas
 from PyQt5.QtGui import QImage, QPainter
@@ -20,18 +22,16 @@ from PyQt5.QtCore import QSize
 
 #initialize QGIS app
 def initialize_qgis():
-    ('C:\\Program Files\\QGIS 3.34.2', True)
+    QgsApplication.setPrefixPath('C:\\Program Files\\QGIS 3.34.2', True)
     qgs = QgsApplication([], False)
     qgs.initQgis()
     return qgs
 
 #load csv data as qgis layer
 def load_csv_as_layer(file_path):
-    #file_path = str(r"C:\Users\abc\OneDrive - I\Desktop\CODE SOURCE FILES\Ott, OH TEST RSRP.csv")
     file_path = str('C:\\CODE\\Input\\TEST.csv')
-    uri = f"file:///{file_path}?delimeter=,&xField=longitude&yField=latitude&crs=epsg:4326"
+    uri = f"file:///{file_path}?delimiter=,&xField=longitude&yField=latitude&crs=epsg:4326"
     layer = QgsVectorLayer(uri, 'Points', 'delimitedtext')
-    #QgsLayerTreeLayer(layeyId(layer))
     if not layer.isValid():
         raise ValueError(f"Layer failed to load :( {file_path}")
     return layer
@@ -47,15 +47,32 @@ def add_basemap(project):
 
 
 #load and apply QML style
-def apply_qml_style(layer, qml_path):
-    layer.loadNamedStyle(qml_path)
-    layer.triggerRepaint()
+def apply_qml_style(layer, qml_path, value_field):
+    #layer.loadNamedStyle(qml_path)
+    #layer.triggerRepaint()
 
-#Function to load QGIS project template - GAS
+    if not os.path.exists(qml_path):
+        raise FileNotFoundError(f"QML file not found: {qml_path}")
+    
+    # Load the QML style
+    if not layer.loadNamedStyle(qml_path):
+        raise ValueError(f"Failed to load QML style from {qml_path}")
+
+    # Update the layer's symbology to use the specified attribute field
+    renderer = layer.renderer()
+    if renderer:
+        if isinstance(renderer, QgsCategorizedSymbolRenderer):
+            renderer.setClassAttribute(value_field)
+        elif isinstance(renderer, QgsGraduatedSymbolRenderer):
+            renderer.setClassAttribute(value_field)
+        layer.triggerRepaint()
+
+#Function to load QGIS project template
 def load_template(template_path):
-    template_path = 'C:\\CODE\\Template\\QGIS-GasCoverage-Style'
+    template_path = 'C:\\CODE\\Template\\QGIS-WaterCoverage-Style.qml'
     project = QgsProject.instance()
     project.read(template_path)
+    
     return project
 
 #set_layer_order- explicitly set the layer order
@@ -71,7 +88,7 @@ def set_layer_order(project, layers):
 
     
     
-def plot_points_and_export_image(layer, output_image_path, template_path, qml_path, padding_factor):
+def plot_points_and_export_image(layer, output_image_path, template_path, qml_path, value_field):
     #create projext instance
     #project = QgsProject.instance()
     project = load_template(template_path)
@@ -80,27 +97,15 @@ def plot_points_and_export_image(layer, output_image_path, template_path, qml_pa
     #add layer to QGIS project
     project.addMapLayer(layer)
      # Apply the QML style to the layer
-    apply_qml_style(layer, qml_path)
+    apply_qml_style(layer, qml_path, value_field)
     osm_layer = add_basemap(project)
         
-    #set map settings
+    #set map settings. EPSG 4326 is key standard due to being globe standard vs EPSG 3857 = map standard 
     map_settings = QgsMapSettings()
     map_settings.setLayers([layer, osm_layer])
     map_settings.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
     map_settings.setOutputSize(QSize(2000, 1500))
     map_settings.setExtent(layer.extent())
-      # Calculate the expanded extent with padding
-    original_extent = layer.extent()
-    x_padding = original_extent.width() * padding_factor
-    y_padding = original_extent.height() * padding_factor
-    expanded_extent = original_extent.buffered(max(x_padding, y_padding))
-    map_settings.setExtent(expanded_extent)
-    map_settings.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
-    map_settings.setScale()
-
-    # Adjust the image size
-    image_width = 800
-    image_height = 600
     
     #create image to render map
     image = QImage(map_settings.outputSize(), QImage.Format_ARGB32_Premultiplied)
@@ -127,7 +132,7 @@ def cleanup_qgis(qgs):
     
     
 # main function to load csv data, plot points to map, export image as PNG
-def main(input_csv, output_image, template_path, qml_path, padding_factor=0.1):
+def main(input_csv, output_image, template_path, qml_path, value_field):
     try:
         qgs = initialize_qgis()
         print("QGIS Initialized successfully")
@@ -136,7 +141,7 @@ def main(input_csv, output_image, template_path, qml_path, padding_factor=0.1):
         return    
     try: 
         layer = load_csv_as_layer(input_csv)
-        plot_points_and_export_image(layer, output_image, template_path, qml_path, padding_factor)
+        plot_points_and_export_image(layer, output_image, template_path, qml_path, value_field)
         print("it works")
     finally:
         cleanup_qgis(qgs)
@@ -145,13 +150,17 @@ def main(input_csv, output_image, template_path, qml_path, padding_factor=0.1):
 if __name__ == "__main__":
     #cwd = os.getcwd()
     input_csv = 'C:\\CODE\\Input\\TEST.csv'
-    output_image = 'C:\\CODE\\Output\\mapped_Gas_output.png'
-    template_path = 'C:\\CODE\\Template\\QGIS-GasCoverage-Style.qml'
-    qml_path = 'C:\\CODE\\Template\\QGIS-GasCoverage-Style'
+    output_image = 'C:\\CODE\\Output\\mapped_Water_output_ATT.png'
+    template_path = 'C:\\CODE\\Template\\QGIS-WaterCoverage-Style.qml'
+    qml_path = 'C:\\CODE\\Template\\QGIS-WaterCoverage-Style.qml'
+    value_field = 'ATT'
     
     # Print paths to verify they are correct
     print(f"CSV data loaded successfully from {input_csv}.")
     print(f"Input CSV Path: {input_csv}")
     print(f"Output Image Path: {output_image}")
+    print(f"specifing value field: ATT: {value_field}")
     
-    main(input_csv, output_image, template_path, qml_path, padding_factor=0.1)    
+    main(input_csv, output_image, template_path, qml_path, value_field)    
+    
+    
