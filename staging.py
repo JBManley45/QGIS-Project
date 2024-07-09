@@ -1,4 +1,3 @@
-#Running: V Only, W RF Freindly 
 import os
 import pandas as pd
 import csv
@@ -20,14 +19,14 @@ from PyQt5.QtCore import QSize
 
 #initialize QGIS app
 def initialize_qgis():
-    ('C:\\Program Files\\QGIS 3.34.2', True)
+    QgsApplication.setPrefixPath('x', True)
     qgs = QgsApplication([], False)
     qgs.initQgis()
     return qgs
 
 #load csv data as qgis layer
 def load_csv_as_layer(file_path):
-    file_path = str('')
+    file_path = str('xxxx')
     uri = f"file:///{file_path}?delimiter=,&xField=longitude&yField=latitude&crs=epsg:4326"
     layer = QgsVectorLayer(uri, 'Points', 'delimitedtext')
     if not layer.isValid():
@@ -46,12 +45,15 @@ def add_basemap(project):
 
 #load and apply QML style
 def apply_qml_style(layer, qml_path):
+    # Update the layer's symbology to use the specified attribute field
+    #layer.renderer().symbol().symbolLayer(0).setDataDefinedProperty('field', value_field)
+    
     layer.loadNamedStyle(qml_path)
     layer.triggerRepaint()
 
 #Function to load QGIS project template
 def load_template(template_path):
-    template_path = ''
+    template_path = 'xxxx'
     project = QgsProject.instance()
     project.read(template_path)
     return project
@@ -81,7 +83,7 @@ def plot_points_and_export_image(layer, output_image_path, template_path, qml_pa
     apply_qml_style(layer, qml_path)
     osm_layer = add_basemap(project)
         
-    #set map settings
+    #set map settings. EPSG 4326 is key standard due to being globe standard vs EPSG 3857 = map standard 
     map_settings = QgsMapSettings()
     map_settings.setLayers([layer, osm_layer])
     map_settings.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
@@ -130,10 +132,10 @@ def main(input_csv, output_image, template_path, qml_path):
         
 if __name__ == "__main__":
     #cwd = os.getcwd()
-    input_csv = ''
-    output_image = ''
-    template_path = ''
-    qml_path = ''
+    input_csv = 'x'
+    output_image = 'xx'
+    template_path = 'xxxx'
+    qml_path = 'xxxxx'
     
     # Print paths to verify they are correct
     print(f"CSV data loaded successfully from {input_csv}.")
@@ -141,3 +143,5 @@ if __name__ == "__main__":
     print(f"Output Image Path: {output_image}")
     
     main(input_csv, output_image, template_path, qml_path)    
+    
+    

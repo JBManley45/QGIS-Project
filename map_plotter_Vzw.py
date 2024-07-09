@@ -1,4 +1,3 @@
-#Running: Vzw Only, Water RF Freindly 
 import os
 import pandas as pd
 import csv
