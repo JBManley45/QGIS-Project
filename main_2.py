@@ -15,6 +15,14 @@ def initialize_qgis():
 def cleanup_qgis(qgs):
     qgs.exitQgis()
     
+def run_plotter(plotter_main, input_csv, output_image, template_path, qml_path, value_field):
+    qgs = initialize_qgis()
+    try:
+        plotter_main(input_csv, output_image, template_path, qml_path, value_field)
+    finally:
+        cleanup_qgis(qgs)
+        print(f"QGIS cleaned up after running {plotter_main.__name__} :)")
+        
 def main():
     print("THRUSTERS ENGAGE (starting all map plotters)")
     
@@ -42,6 +50,7 @@ def main():
     qml_path_VzwPrimary = ['C:\\CODE\\Template\\QGIS-SecondaryCoverage_Vzw-Primary-Style.qml', 'C:\\CODE\\Template\\QGIS-WaterCoverageBlue-Style.qml']
     qml_path_ATTPrimary = ['C:\\CODE\\Template\\QGIS-SecondaryCoverage_ATT-Primary-Style.qml', 'C:\\CODE\\Template\\QGIS-WaterCoverageBlue-Style.qml']
     
+    value_field_Vzw = 'Vzw'
     value_field_ATT = 'ATT'
     value_fields_VzwPrim = ['Primary Vzw', 'Vzw Primary']
     value_fields_ATTPrim = ['Primarary ATT', 'ATT Primary']
@@ -51,10 +60,13 @@ def main():
     
     try:
         #run each map plotter
-        main_1(input_csv, output_image_VzwOnly, template_path, qml_path_VzwOnly)
-        main_2(input_csv, output_image_ATTOnly, template_path, qml_path_ATTOnly, value_field_ATT)
-        main_3(input_csv, output_image_VzwPrimary, template_path, qml_path_VzwPrimary, value_fields_VzwPrim, filter_expressions_VzwPrim)
-        main_4(input_csv, output_image_ATTPrimary, template_path, qml_path_ATTPrimary, value_fields_ATTPrim, filter_expressions_ATTPrim)
+        run_plotter(main_1, input_csv, output_image_VzwOnly, template_path, qml_path_VzwOnly, value_field_Vzw)
+        time.sleep(5)
+        run_plotter(main_2, input_csv, output_image_ATTOnly, template_path, qml_path_ATTOnly, value_field_ATT)
+        time.sleep(5)
+        run_plotter(main_3, input_csv, output_image_VzwPrimary, template_path, qml_path_VzwPrimary, value_fields_VzwPrim, filter_expressions_VzwPrim)
+        time.sleep(5)
+        run_plotter(main_4, input_csv, output_image_ATTPrimary, template_path, qml_path_ATTPrimary, value_fields_ATTPrim, filter_expressions_ATTPrim)
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:

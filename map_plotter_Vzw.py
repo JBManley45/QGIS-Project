@@ -11,6 +11,7 @@ from qgis.core import (
     QgsMapRendererParallelJob,
     QgsRasterLayer,
     QgsLayerTreeGroup,
+    QgsRectangle
 )
 from qgis.gui import QgsMapCanvas
 from PyQt5.QtGui import QImage, QPainter
@@ -69,9 +70,27 @@ def set_layer_order(project, layers):
            root.removeChildNode(node)
         group.addLayer(layer)
 
+def calculate_buffer_extent(extent, buffer_percent=0.1):
+    """
+    Calculate a new extent with a buffer around the original extent.
     
+    :param extent: The original extent (QgsRectangle).
+    :param buffer_percent: The percentage of buffer space to add around the extent.
+    :return: A new extent (QgsRectangle) with the buffer.
+    """
+    buffer_x = extent.width() * buffer_percent
+    buffer_y = extent.height() * buffer_percent
+
+    new_extent = QgsRectangle(
+        extent.xMinimum() - buffer_x,
+        extent.yMinimum() - buffer_y,
+        extent.xMaximum() + buffer_x,
+        extent.yMaximum() + buffer_y
+    )
+
+    return new_extent   
     
-def plot_points_and_export_image(layer, output_image_path, template_path, qml_path):
+def plot_points_and_export_image(layer, output_image_path, template_path, qml_path, buffer_percent=0.1):
     #create projext instance
     #project = QgsProject.instance()
     project = load_template(template_path)
@@ -82,13 +101,15 @@ def plot_points_and_export_image(layer, output_image_path, template_path, qml_pa
      # Apply the QML style to the layer
     apply_qml_style(layer, qml_path)
     osm_layer = add_basemap(project)
+    original_extent = layer.extent()
+    new_extent = calculate_buffer_extent(original_extent, buffer_percent)
         
     #set map settings. EPSG 4326 is key standard due to being globe standard vs EPSG 3857 = map standard 
     map_settings = QgsMapSettings()
     map_settings.setLayers([layer, osm_layer])
     map_settings.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
     map_settings.setOutputSize(QSize(2000, 1500))
-    map_settings.setExtent(layer.extent())
+    map_settings.setExtent(new_extent)
     
     #create image to render map
     image = QImage(map_settings.outputSize(), QImage.Format_ARGB32_Premultiplied)
